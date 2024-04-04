@@ -1,0 +1,1184 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '3.7'
+
+volumes:
+  orderer.example.com:
+  peer0.org1.example.com:
+  peer1.org1.example.com:
+  peer2.org1.example.com:
+  peer3.org1.example.com:
+  peer4.org1.example.com:
+  peer5.org1.example.com:
+  peer6.org1.example.com:
+  peer7.org1.example.com:
+  peer8.org1.example.com:
+  peer9.org1.example.com:
+  peer0.org2.example.com:
+  peer1.org2.example.com:
+  peer2.org2.example.com:
+  peer3.org2.example.com:
+  peer4.org2.example.com:
+  peer5.org2.example.com:
+  peer6.org2.example.com:
+  peer7.org2.example.com:
+  peer8.org2.example.com:
+  peer9.org2.example.com:
+
+networks:
+  test:
+    name: fabric_test
+
+services:
+  orderer.example.com:
+    container_name: orderer.example.com
+    image: hyperledger/fabric-orderer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=none
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=true
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+      - ORDERER_OPERATIONS_LISTENADDRESS=orderer.example.com:9443
+      - ORDERER_METRICS_PROVIDER=prometheus
+    working_dir: /root
+    command: orderer
+    volumes:
+        - ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp
+        - ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/:/var/hyperledger/orderer/tls
+        - orderer.example.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+      - 7053:7053
+      - 9443:9443
+    networks:
+      - test
+
+  peer0.org1.example.com:
+    container_name: peer0.org1.example.com
+    image: hyperledger/fabric-peer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      # kafka settings
+      - KAFKA_BROKER1=192.168.0.12:9091
+      - KAFKA_BROKER2=192.168.0.12:9092
+      - KAFKA_BROKER3=192.168.0.12:9093
+      - KAFKA_LINGER=0
+      - KAFKA_BATCHSIZE=15000
+      # w-fabric settings
+      - TIME_VARIED_SEED=true   
+      - NUM_SOURCE_SYMBOLS=500
+      - SYMBOL_ALIGNMENT_SIZE=5
+      - NUM_ENCODED_SOURCE_SYMBOLS=650
+      - PEER_NUMBER=1
+      - BUNDLE=10
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      # Peer common variables
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      # Peer specific variables
+      - CORE_PEER_ID=peer0.org1.example.com
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org1.example.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.org1.example.com:9444
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+    volumes:
+      - ../organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com:/etc/hyperledger/fabric
+      - peer0.org1.example.com:/var/hyperledger/production
+      - /etc/timezone:/etc/timezone:ro
+    working_dir: /root
+    command: peer node start
+    ports:
+      - 7051:7051
+      - 9444:9444
+    networks:
+      - test
+    cap_add:
+      - NET_ADMIN
+
+  # peer1.org1.example.com:
+  #   container_name: peer1.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer1.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer1.org1.example.com:7151
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7151
+  #     - CORE_PEER_CHAINCODEADDRESS=peer1.org1.example.com:7152
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7152
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org1.example.com:7151
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer1.org1.example.com:9446
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer1org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer1.org1.example.com:/etc/hyperledger/fabric
+  #     - peer1.org1.example.com:/var/hyperledger/production
+  #     - /etc/timezone:/etc/timezone:ro
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7151:7151
+  #     - 9446:9446
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer2.org1.example.com:
+  #   container_name: peer2.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer2.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer2.org1.example.com:7251
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7251
+  #     - CORE_PEER_CHAINCODEADDRESS=peer2.org1.example.com:7252
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7252
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org1.example.com:7251
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer2.org1.example.com:9447
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer2org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer2.org1.example.com:/etc/hyperledger/fabric
+  #     - peer2.org1.example.com:/var/hyperledger/production
+  #     - /etc/timezone:/etc/timezone:ro
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7251:7251
+  #     - 9447:9447
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer3.org1.example.com:
+  #   container_name: peer3.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer3.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer3.org1.example.com:7351
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7351
+  #     - CORE_PEER_CHAINCODEADDRESS=peer3.org1.example.com:7352
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7352
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org1.example.com:7351
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer3.org1.example.com:9448
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer3org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer3.org1.example.com:/etc/hyperledger/fabric
+  #     - peer3.org1.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7351:7351
+  #     - 9448:9448
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer4.org1.example.com:
+  #   container_name: peer4.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer4.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer4.org1.example.com:7451
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7451
+  #     - CORE_PEER_CHAINCODEADDRESS=peer4.org1.example.com:7452
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7452
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org1.example.com:7451
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer4.org1.example.com:9449
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer4org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer4.org1.example.com:/etc/hyperledger/fabric
+  #     - peer4.org1.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7451:7451
+  #     - 9449:9449
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer5.org1.example.com:
+  #   container_name: peer5.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer5.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer5.org1.example.com:7551
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7551
+  #     - CORE_PEER_CHAINCODEADDRESS=peer5.org1.example.com:7552
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7552
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org1.example.com:7551
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer5.org1.example.com:9450
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer5org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer5.org1.example.com:/etc/hyperledger/fabric
+  #     - peer5.org1.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7551:7551
+  #     - 9450:9450
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer6.org1.example.com:
+  #   container_name: peer6.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer6.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer6.org1.example.com:7651
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7651
+  #     - CORE_PEER_CHAINCODEADDRESS=peer6.org1.example.com:7652
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7652
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org1.example.com:7651
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer6.org1.example.com:9471
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer6.org1.example.com:/etc/hyperledger/fabric
+  #     - peer6.org1.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7651:7651
+  #     - 9471:9471
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer7.org1.example.com:
+  #   container_name: peer7.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer7.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer7.org1.example.com:7751
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7751
+  #     - CORE_PEER_CHAINCODEADDRESS=peer7.org1.example.com:7752
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7752
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org1.example.com:7751
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer7.org1.example.com:9452
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer7.org1.example.com:/etc/hyperledger/fabric
+  #     - peer7.org1.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7751:7751
+  #     - 9452:9452
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer8.org1.example.com:
+  #   container_name: peer8.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer8.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer8.org1.example.com:7851
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7851
+  #     - CORE_PEER_CHAINCODEADDRESS=peer8.org1.example.com:7852
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7852
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org1.example.com:7851
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer8.org1.example.com:9453
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer8.org1.example.com:/etc/hyperledger/fabric
+  #     - peer8.org1.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7851:7851
+  #     - 9453:9453
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer9.org1.example.com:
+  #   container_name: peer9.org1.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer9.org1.example.com
+  #     - CORE_PEER_ADDRESS=peer9.org1.example.com:7951
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:7951
+  #     - CORE_PEER_CHAINCODEADDRESS=peer9.org1.example.com:7952
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7952
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org1.example.com:7951
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+  #     - CORE_PEER_LOCALMSPID=Org1MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer9.org1.example.com:9454
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org1.example.com/peers/peer9.org1.example.com:/etc/hyperledger/fabric
+  #     - peer9.org1.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 7951:7951
+  #     - 9454:9454
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  peer0.org2.example.com:
+    container_name: peer0.org2.example.com
+    image: hyperledger/fabric-peer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      # kafka settings
+      - KAFKA_BROKER1=192.168.0.12:9091
+      - KAFKA_BROKER2=192.168.0.12:9092
+      - KAFKA_BROKER3=192.168.0.12:9093
+      - KAFKA_LINGER=0
+      - KAFKA_BATCHSIZE=15000
+      # weave fabric settings
+      - TIME_VARIED_SEED=true   
+      - NUM_SOURCE_SYMBOLS=500
+      - SYMBOL_ALIGNMENT_SIZE=5
+      - NUM_ENCODED_SOURCE_SYMBOLS=650
+      - PEER_NUMBER=1
+      - BUNDLE=10
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      # Peer common variables
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      # Peer specific variables
+      - CORE_PEER_ID=peer0.org2.example.com
+      - CORE_PEER_ADDRESS=peer0.org2.example.com:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org2.example.com:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:9051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.org2.example.com:9445
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+    volumes:
+      - ../organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com:/etc/hyperledger/fabric
+      - peer0.org2.example.com:/var/hyperledger/production
+      - /etc/timezone:/etc/timezone:ro
+    working_dir: /root
+    command: peer node start
+    ports:
+      - 9051:9051
+      - 9445:9445
+    networks:
+      - test
+    cap_add:
+      - NET_ADMIN
+
+  # peer1.org2.example.com:
+  #   container_name: peer1.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #    # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer1.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer1.org2.example.com:9151
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9151
+  #     - CORE_PEER_CHAINCODEADDRESS=peer1.org2.example.com:9152
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9152
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org2.example.com:9151
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer1.org2.example.com:9555
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer1.org2.example.com:/etc/hyperledger/fabric
+  #     - peer1.org2.example.com:/var/hyperledger/production
+  #     - /etc/timezone:/etc/timezone:ro
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9151:9151
+  #     - 9555:9555
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer2.org2.example.com:
+  #   container_name: peer2.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer2.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer2.org2.example.com:9251
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9251
+  #     - CORE_PEER_CHAINCODEADDRESS=peer2.org2.example.com:9252
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9252
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org2.example.com:9251
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer2.org2.example.com:9556
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer2.org2.example.com:/etc/hyperledger/fabric
+  #     - peer2.org2.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9251:9251
+  #     - 9556:9556
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer3.org2.example.com:
+  #   container_name: peer3.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer3.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer3.org2.example.com:9351
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9351
+  #     - CORE_PEER_CHAINCODEADDRESS=peer3.org2.example.com:9352
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9352
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer3.org2.example.com:9351
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer3.org2.example.com:9557
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer3.org2.example.com:/etc/hyperledger/fabric
+  #     - peer3.org2.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9351:9351
+  #     - 9557:9557
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer4.org2.example.com:
+  #   container_name: peer4.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer4.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer4.org2.example.com:9451
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9451
+  #     - CORE_PEER_CHAINCODEADDRESS=peer4.org2.example.com:9452
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9452
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer4.org2.example.com:9451
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer4.org2.example.com:9558
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer4.org2.example.com:/etc/hyperledger/fabric
+  #     - peer4.org2.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9451:9451
+  #     - 9558:9558
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer5.org2.example.com:
+  #   container_name: peer5.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer5.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer5.org2.example.com:9551
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9551
+  #     - CORE_PEER_CHAINCODEADDRESS=peer5.org2.example.com:9552
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9552
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer5.org2.example.com:9551
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer5.org2.example.com:9559
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer5.org2.example.com:/etc/hyperledger/fabric
+  #     - peer5.org2.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9551:9551
+  #     - 9559:9559
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer6.org2.example.com:
+  #   container_name: peer6.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer6.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer6.org2.example.com:9651
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9651
+  #     - CORE_PEER_CHAINCODEADDRESS=peer6.org2.example.com:9652
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9652
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer6.org2.example.com:9651
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer6.org2.example.com:9560
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer6.org2.example.com:/etc/hyperledger/fabric
+  #     - peer6.org2.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9651:9651
+  #     - 9560:9560
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer7.org2.example.com:
+  #   container_name: peer7.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer7.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer7.org2.example.com:9751
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9751
+  #     - CORE_PEER_CHAINCODEADDRESS=peer7.org2.example.com:9752
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9752
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer7.org2.example.com:9751
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer7.org2.example.com:9561
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer7.org2.example.com:/etc/hyperledger/fabric
+  #     - peer7.org2.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9751:9751
+  #     - 9561:9561
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer8.org2.example.com:
+  #   container_name: peer8.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer8.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer8.org2.example.com:9851
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9851
+  #     - CORE_PEER_CHAINCODEADDRESS=peer8.org2.example.com:9852
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9852
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer8.org2.example.com:9851
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer8.org2.example.com:9562
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer8.org2.example.com:/etc/hyperledger/fabric
+  #     - peer8.org2.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9851:9851
+  #     - 9562:9562
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  # peer9.org2.example.com:
+  #   container_name: peer9.org2.example.com
+  #   image: hyperledger/fabric-peer:latest
+  #   labels:
+  #     service: hyperledger-fabric
+  #   environment:
+  #     # kafka settings
+  #     - KAFKA_BROKER1=192.168.0.12:9091
+  #     - KAFKA_BROKER2=192.168.0.12:9092
+  #     - KAFKA_BROKER3=192.168.0.12:9093
+  #     - KAFKA_LINGER=0
+  #     - KAFKA_BATCHSIZE=15000
+  #     # weave fabric settings
+  #     - TIME_VARIED_SEED=true   
+  #     - NUM_SOURCE_SYMBOLS=500
+  #     - SYMBOL_ALIGNMENT_SIZE=5
+  #     - NUM_ENCODED_SOURCE_SYMBOLS=650
+  #     - PEER_NUMBER=2
+  #     - BUNDLE=100
+  #     - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+  #     - FABRIC_LOGGING_SPEC=INFO
+  #     # Peer common variables
+  #     - CORE_PEER_TLS_ENABLED=true
+  #     - CORE_PEER_PROFILE_ENABLED=false
+  #     - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+  #     - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+  #     - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+  #     # Peer specific variables
+  #     - CORE_PEER_ID=peer9.org2.example.com
+  #     - CORE_PEER_ADDRESS=peer9.org2.example.com:9951
+  #     - CORE_PEER_LISTENADDRESS=0.0.0.0:9951
+  #     - CORE_PEER_CHAINCODEADDRESS=peer9.org2.example.com:9952
+  #     - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9952
+  #     - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer9.org2.example.com:9951
+  #     - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+  #     - CORE_PEER_LOCALMSPID=Org2MSP
+  #     - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+  #     - CORE_OPERATIONS_LISTENADDRESS=peer9.org2.example.com:9563
+  #     - CORE_METRICS_PROVIDER=prometheus
+  #     - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+  #     - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+  #   volumes:
+  #     - ../organizations/peerOrganizations/org2.example.com/peers/peer9.org2.example.com:/etc/hyperledger/fabric
+  #     - peer9.org2.example.com:/var/hyperledger/production
+  #   working_dir: /root
+  #   command: peer node start
+  #   ports:
+  #     - 9951:9951
+  #     - 9563:9563
+  #   networks:
+  #     - test
+  #   cap_add:
+  #     - NET_ADMIN
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:latest
+    labels:
+      service: hyperledger-fabric
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - FABRIC_LOGGING_SPEC=INFO
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      #- FABRIC_LOGGING_SPEC=DEBUG
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+      - ../organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
+      - ../scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+    depends_on:
+      - peer0.org1.example.com
+      - peer0.org2.example.com
+    networks:
+      - test
