@@ -23,7 +23,10 @@ Install the latest version of Go if it is not already installed (only required i
 #### JQ
 
 Install the latest version of jq if it is not already installed (only required for the tutorials related to channel configuration transactions).
+
 ```apt-get install JQ```
+
+#### Mongodb
 
 
 ### Download Fabric Docker images, and fabric binaries
@@ -61,31 +64,35 @@ KAFKA_BROKER3={YOUR_IP}:9093
 ## How to start
 
 
-kafka-realtime processor > watchdog snode > watchdog wnode > fabric
+deploy kafka-realtime processor
 
 ```
-docker run -it --name kafka kafka:1.0 ./src/kafka.sh {brokerIP}
-ex) docker run -it --name kafka kafka:1.0 ./src/kafka.sh 172.17.0.2
+docker run -it --name kafka ghcr.io/jhikyuinn/kafka:1.0 ./src/kafka.sh {YOUR_IP}
+// e.g. docker run -it --name kafka ghcr.io/jhikyuinn/kafka:1.0 ./src/kafka.sh 192.168.0.12
 ```
 
+deploy watchdog snode
 ```
-docker run -it --privileged --add-host host.docker.internal:{snodeIP} --name snode s-node:1.0 ./src/snode.sh {processorIP}
-ex) docker run -it --privileged --add-host host.docker.internal:172.17.0.3 --name snode s-node:1.0 ./src/snode.sh 172.17.0.2
-```
-
-```
-docker run -it  --privileged --add-host host.docker.internal:{wnodeIP} --name wnode w-node:1.0 ./src/wnode.sh {snodeIP} {brokerIP} {wnodeIP} {snodePeerID}
-ex) docker run -it  --privileged --add-host host.docker.internal:172.17.0.4 --name wnode w-node:1.0 ./src/wnode.sh 172.17.0.3 192.168.0.12 172.17.0.3 QmdB8Uyuvv5TZbs8Rxi8VefgxkrSZQzVgFf1Adq4Ce8NpD
+docker run -it --privileged --add-host host.docker.internal:{snodeIP} --name snode ghcr.io/jhikyuinn/s-node:1.0 ./src/snode.sh {snodeIP} {processorIP}
+// e.g. docker run -it --network host --name snode snode:v1 ./src/snode.sh 192.168.0.12 192.168.0.12
 ```
 
+deploy watchdog wnode
+```
+docker run -it  --privileged --add-host host.docker.internal:{wnodeIP} --name wnode ghcr.io/jhikyuinn/w-node:1.0 ./src/wnode.sh {snodeIP} {YOUR_IP} {wnodeIP} {snodePeerID}
+// e.g. docker run -it  --network host --name wnode ghcr.io/jhikyuinn/w-node:1.0 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+```
+
+deploy fabric
 ```
 cd fabric
 make orderer-docker
 make peer-docker
 ```
 
+invoke transaction
 ```
 cd fabric-samples/test-network
 ./start.sh
-./invokes.sh
+./invoke.sh
 ```
