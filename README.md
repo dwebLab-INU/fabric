@@ -18,15 +18,26 @@ Add your user to the Docker group.
 
 #### Go
 
-Install the latest version of Go if it is not already installed (only required if you will be writing Go chaincode or SDK applications).
+Install at https://go.dev/doc/install
 
 #### JQ
 
 Install the latest version of jq if it is not already installed (only required for the tutorials related to channel configuration transactions).
 
-```apt-get install JQ```
+```sudo apt-get install jq```
 
 #### Mongodb
+
+```
+sudo apt-get install gnupg curl
+curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
+   sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg \
+   --dearmor
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+sudo apt-get update
+sudo apt-get install -y mongodb-org
+
+```
 
 
 ### Download Fabric Docker images, and fabric binaries
@@ -35,7 +46,7 @@ To get the install script:
 
 ```curl -sSLO https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/install-fabric.sh && chmod +x install-fabric.sh```
 
-We only need docker images and binaries, not samples
+We only need docker images and binaries, not samples.
 ```
 ./install-fabric.sh d b
 or
@@ -44,55 +55,69 @@ or
 
 ### Prepare docker images
 
+You can pull kafka, snode, wnode docker images
+
 ```
-docker load -i kafka.tar
-docker load -i snode.tar
-docker load -i wnode.tar
+docker pull ghcr.io/dweblab-inu/kafka:v1
+docker pull ghcr.io/dweblab-inu/snode:v1
+docker pull ghcr.io/dweblab-inu/wnode:v1
 ```
 
 ### Start a kafka broker:
 
-```docker-compose up -d```
+Before start broker, you have to write IPAddress in .env file.
 
 .env
 ```
-KAFKA_BROKER1={YOUR_IP}:9091
-KAFKA_BROKER2={YOUR_IP}:9092
-KAFKA_BROKER3={YOUR_IP}:9093
+KAFKA_BROKER1={BrokerIP}:9091
+KAFKA_BROKER2={BrokerIP}:9092
+KAFKA_BROKER3={BrokerIP}:9093
 ```
+
+```docker-compose up -d```
+
+The command to stop broker
+
+```docker-compose down```
 
 ## How to start
 
+Deploy kafka-realtime processor
 
-deploy kafka-realtime processor
-
+ e.g. docker run -it --name kafka ghcr.io/jhikyuinn/kafka:1.0 ./src/kafka.sh 192.168.0.12
 ```
-docker run -it --name kafka ghcr.io/jhikyuinn/kafka:1.0 ./src/kafka.sh {YOUR_IP}
-// e.g. docker run -it --name kafka ghcr.io/jhikyuinn/kafka:1.0 ./src/kafka.sh 192.168.0.12
-```
-
-deploy watchdog snode
-```
-docker run -it --privileged --add-host host.docker.internal:{snodeIP} --name snode ghcr.io/jhikyuinn/s-node:1.0 ./src/snode.sh {snodeIP} {processorIP}
-// e.g. docker run -it --network host --name snode snode:v1 ./src/snode.sh 192.168.0.12 192.168.0.12
+docker run -it --name kafka ghcr.io/jhikyuinn/kafka:1.0 ./src/kafka.sh {BrokerIP}
 ```
 
-deploy watchdog wnode
+Deploy watchdog snode
+
+e.g. docker run -it --network host --name snode snode:v1 ./src/snode.sh 192.168.0.12 192.168.0.12
 ```
-docker run -it  --privileged --add-host host.docker.internal:{wnodeIP} --name wnode ghcr.io/jhikyuinn/w-node:1.0 ./src/wnode.sh {snodeIP} {YOUR_IP} {wnodeIP} {snodePeerID}
-// e.g. docker run -it  --network host --name wnode ghcr.io/jhikyuinn/w-node:1.0 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+docker run -it --name snode ghcr.io/jhikyuinn/snode:1.0 ./src/snode.sh {snodeIP} {processorIP}
 ```
 
-deploy fabric
+Deploy watchdog wnode
+
+e.g. docker run -it  --network host --name wnode ghcr.io/jhikyuinn/w-node:1.0 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+```
+docker run -it  --name wnode ghcr.io/jhikyuinn/wnode:1.0 ./src/wnode.sh {snodeIP} {BrokerIP} {wnodeIP} {snodePeerID}
+```
+
+Deploy fabric 
+
 ```
 cd fabric
-make orderer-docker
 make peer-docker
 ```
 
-invoke transaction
+You can test the fabric network.
+
 ```
 cd fabric-samples/test-network
 ./start.sh
-./invoke.sh
+./invoke.sh 
 ```
+
+The command to stop fabric network
+
+```./network down```
