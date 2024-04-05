@@ -93,14 +93,14 @@ Deploy watchdog snode
 
 e.g. docker run -it --network host --name snode ghcr.io/dweb-lab/snode:v1 ./src/snode.sh 192.168.0.12 192.168.0.12
 ```
-docker run -it --network host --name snode ghcr.io/dweb-lab/snode:1.0 ./src/snode.sh {snodeIP} {processorIP}
+docker run -it --network host --name snode ghcr.io/dweblab-inu/snode:v1 ./src/snode.sh {snodeIP} {processorIP}
 ```
 
 Deploy watchdog wnode
 
 e.g. docker run -it  --network host --name wnode ghcr.io/dweb-lab/snode:1.0 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
 ```
-docker run -it --network host --name wnode ghcr.io/dweb-lab/wnode:1.0 ./src/wnode.sh {snodeIP} {BrokerIP} {wnodeIP} {snodePeerID}
+docker run -it --network host --name wnode ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh {snodeIP} {BrokerIP} {wnodeIP} {snodePeerID}
 ```
 
 Deploy fabric 
