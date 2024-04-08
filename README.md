@@ -84,21 +84,21 @@ The command to stop broker
 
 Deploy kafka-realtime processor
 
- e.g. docker run -it --name kafka ghcr.io/dweb-lab/kafka:v1 ./src/kafka.sh 192.168.0.12
+ e.g. docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v1 ./src/kafka.sh 192.168.0.12
 ```
-docker run -it --name kafka ghcr.io/jhikyuinn/kafka:1.0 ./src/kafka.sh {BrokerIP}
+docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v1 ./src/kafka.sh {BrokerIP}
 ```
 
 Deploy watchdog snode
 
-e.g. docker run -it --network host --name snode ghcr.io/dweb-lab/snode:v1 ./src/snode.sh 192.168.0.12 192.168.0.12
+e.g. docker run -it --network host --name snode ghcr.io/dweblab-inu/snode:v1 ./src/snode.sh 192.168.0.12 192.168.0.12
 ```
 docker run -it --network host --name snode ghcr.io/dweblab-inu/snode:v1 ./src/snode.sh {snodeIP} {processorIP}
 ```
 
 Deploy watchdog wnode
 
-e.g. docker run -it  --network host --name wnode ghcr.io/dweb-lab/snode:1.0 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+e.g. docker run -it  --network host --name wnode ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
 ```
 docker run -it --network host --name wnode ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh {snodeIP} {BrokerIP} {wnodeIP} {snodePeerID}
 ```
@@ -120,4 +120,4 @@ cd fabric-samples/test-network
 
 The command to stop fabric network
 
-```./network down```
+```./network.sh down```
