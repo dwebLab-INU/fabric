@@ -10,15 +10,27 @@ To make Fabric blockchain more reliable and trustworthy by connecting it to a pr
 
 Install the latest version of Docker if it is not already installed.
 
-  ```sudo apt-get -y install docker-compose``` 
-
-Add your user to the Docker group.
-
-  ```sudo usermod -a -G docker <username>``` 
+```
+sudo apt-get -y install docker-compose
+sudo chmod 666 /var/run/docker.sock
+``` 
 
 #### Go
 
-Install at https://go.dev/doc/install
+
+```
+sudo apt-get update
+sudo apt-get -y upgrade
+which wget
+sudo apt-get install wget
+
+wget https://golang.org/dl/go1.22.2.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
+source ~/.bashrc
+
+go version
+```
 
 #### JQ
 
@@ -28,16 +40,12 @@ Install the latest version of jq if it is not already installed (only required f
 
 #### Mongodb
 
-```
-sudo apt-get install gnupg curl
-curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-   sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg \
-   --dearmor
-echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-sudo apt-get update
-sudo apt-get install -y mongodb-org
+Install mongodb-org in this process
 
 ```
+sudo apt-get install mongodb
+```
+
 
 
 ### Download Fabric Docker images, and fabric binaries
@@ -58,7 +66,7 @@ or
 You can pull kafka, snode, wnode docker images
 
 ```
-docker pull ghcr.io/dweblab-inu/kafka:v1
+docker pull ghcr.io/dweblab-inu/kafka:v2
 docker pull ghcr.io/dweblab-inu/snode:v1
 docker pull ghcr.io/dweblab-inu/wnode:v1
 ```
@@ -84,9 +92,9 @@ The command to stop broker
 
 Deploy kafka-realtime processor
 
- e.g. docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v1 ./src/kafka.sh 192.168.0.12
+ e.g. docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v2 ./src/kafka.sh 192.168.0.12
 ```
-docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v1 ./src/kafka.sh {BrokerIP}
+docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v2 ./src/kafka.sh {BrokerIP}
 ```
 
 Deploy watchdog snode
@@ -107,6 +115,7 @@ Deploy fabric
 
 ```
 cd fabric
+sudo apt install make
 make peer-docker
 ```
 
