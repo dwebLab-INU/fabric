@@ -17,6 +17,7 @@ sudo chmod 666 /var/run/docker.sock
 
 #### Go
 
+Install the latest version of Go if it is not already installed.
 
 ```
 sudo apt-get update
@@ -40,11 +41,7 @@ Install the latest version of jq if it is not already installed (only required f
 
 #### Mongodb
 
-Install mongodb-org in this process
-
-```
-sudo apt-get install mongodb
-```
+[Install mongodb-org in this process](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/)
 
 
 
@@ -92,21 +89,34 @@ The command to stop broker
 
 Deploy kafka-realtime processor
 
- e.g. docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v2 ./src/kafka.sh 192.168.0.12
+ e.g. 
+ 
+docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v2 ./src/kafka.sh 192.168.0.12
+
 ```
 docker run -it --network host --name kafka ghcr.io/dweblab-inu/kafka:v2 ./src/kafka.sh {BrokerIP}
 ```
 
 Deploy watchdog snode
 
-e.g. docker run -it --network host --name snode ghcr.io/dweblab-inu/snode:v1 ./src/snode.sh 192.168.0.12 192.168.0.12
+e.g. 
+
+docker run -it --network host --name snode ghcr.io/dweblab-inu/snode:v1 ./src/snode.sh 192.168.0.12 192.168.0.12
+
 ```
 docker run -it --network host --name snode ghcr.io/dweblab-inu/snode:v1 ./src/snode.sh {snodeIP} {processorIP}
 ```
 
 Deploy watchdog wnode
 
-e.g. docker run -it  --network host --name wnode ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+If you want block consensus in watchdog, you have to distribute multiple wnodes.
+
+e.g. 
+   
+   docker run -it  --network host --name wnode1 ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+
+   docker run -it  --network host --name wnode2 ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+     
 ```
 docker run -it --network host --name wnode ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh {snodeIP} {BrokerIP} {wnodeIP} {snodePeerID}
 ```
