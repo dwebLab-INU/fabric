@@ -126,7 +126,7 @@ Deploy fabric
 ```
 cd fabric
 sudo apt install make
-make peer-docker
+make docker
 ```
 
 You can test the fabric network.
