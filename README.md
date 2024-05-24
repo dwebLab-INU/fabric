@@ -113,9 +113,9 @@ If you want block consensus in watchdog, you have to distribute multiple wnodes.
 
 e.g. 
    
-   docker run -it  --network host --name wnode1 ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+   docker run -it  --name wnode1 ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
 
-   docker run -it  --network host --name wnode2 ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
+   docker run -it  --name wnode2 ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh 192.168.0.12 192.168.0.12 192.168.0.12 QmVjm73FcrFU7TQ6D5sae7UCoKuoaftLjLdpRu3FscDz4Z
      
 ```
 docker run -it --network host --name wnode ghcr.io/dweblab-inu/wnode:v1 ./src/wnode.sh {snodeIP} {BrokerIP} {wnodeIP} {snodePeerID}
